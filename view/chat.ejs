@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat</title>
+  <title>PingMe - Chat</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div class="chat-container">
     <header>
-      <h2>Welcome, <%= username %>!</h2>
-      <a href="/logout">Logout</a>
+      <h2>PingMe - Welcome, <%= username %>!</h2>
+      <a href="/logout" style="color: white;">Logout</a>
     </header>
 
     <ul id="messages"></ul>
@@ -22,50 +22,50 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    let historyLoaded = false;
     const socket = io();
     const form = document.getElementById('form');
     const input = document.getElementById('input');
-    const messagesContainer = document.getElementById('messages');
+    const messages = document.getElementById('messages');
     const currentUser = "<%= username %>";
-    socket.on('message history', (messages) => {
-  if (historyLoaded) return; // prevent loading twice
-  historyLoaded = true;
+    let historyLoaded = false;
 
-  messages.forEach(data => {
-    const li = document.createElement('li');
-    li.classList.add('message');
-    li.classList.add(data.username === currentUser ? 'me' : 'them');
-    li.innerHTML = `
-      <span class="username">${data.username}</span>
-      <div class="bubble">${data.msg}</div>
-    `;
-    messagesContainer.appendChild(li);
-  });
+    // Load message history once
+    socket.on('message history', (history) => {
+      if (historyLoaded) return;
+      historyLoaded = true;
 
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-});
+      history.forEach(data => {
+        const li = document.createElement('li');
+        li.classList.add('message');
+        li.classList.add(data.username === currentUser ? 'me' : 'them');
+        li.innerHTML = `
+          <span class="username">${data.username}</span>
+          <div class="bubble">${data.msg}</div>
+        `;
+        messages.appendChild(li);
+      });
 
+      messages.scrollTop = messages.scrollHeight;
+    });
 
+    // New messages
     socket.on('chat message', (data) => {
       const li = document.createElement('li');
       li.classList.add('message');
       li.classList.add(data.username === currentUser ? 'me' : 'them');
-
       li.innerHTML = `
         <span class="username">${data.username}</span>
         <div class="bubble">${data.msg}</div>
       `;
-
-      messagesContainer.appendChild(li);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
+      messages.appendChild(li);
+      messages.scrollTop = messages.scrollHeight;
     });
 
+    // Send a message
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (input.value) {
-        socket.emit('chat message', input.value);
+      if (input.value.trim() !== '') {
+        socket.emit('chat message', input.value.trim());
         input.value = '';
       }
     });

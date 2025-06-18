@@ -1,90 +1,128 @@
+/* Reset & Base */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   background: #e5ddd5;
   margin: 0;
   padding: 0;
 }
 
 .chat-container {
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 800px;
+  margin: auto;
+  background: #fff;
   display: flex;
   flex-direction: column;
   height: 100vh;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Header */
 header {
   background: #075e54;
   color: white;
-  padding: 10px;
+  padding: 10px 20px;
+  font-size: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+/* Messages List */
 #messages {
-  list-style-type: none;
-  padding: 10px;
   flex: 1;
+  padding: 15px;
+  list-style: none;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
+  margin: 0;
+  background: #e5ddd5;
 }
 
+/* Message Item */
 .message {
-  margin: 5px 0;
-  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+  max-width: 65%;
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-radius: 15px;
+  position: relative;
+  word-wrap: break-word;
 }
 
 .message.me {
+  background: #dcf8c6;
   align-self: flex-end;
-  text-align: right;
+  border-bottom-right-radius: 0;
 }
 
 .message.them {
+  background: #fff;
   align-self: flex-start;
+  border-bottom-left-radius: 0;
 }
 
-.message .username {
-  font-size: 0.8em;
+/* Username & Text */
+.username {
+  font-size: 12px;
+  font-weight: bold;
   color: #555;
+  margin-bottom: 4px;
 }
 
 .bubble {
-  padding: 10px;
-  border-radius: 12px;
-  display: inline-block;
-  margin-top: 2px;
+  font-size: 16px;
 }
 
-.message.me .bubble {
-  background: #dcf8c6;
+/* Timestamp */
+.timestamp {
+  font-size: 10px;
+  text-align: right;
+  color: #999;
+  margin-top: 4px;
 }
 
-.message.them .bubble {
-  background: #ffffff;
-}
-
+/* Form */
 form {
   display: flex;
   padding: 10px;
-  background: #f1f1f1;
+  background: #f0f0f0;
+  border-top: 1px solid #ddd;
 }
 
-form input {
+/* Input Field */
+input#input {
   flex: 1;
-  padding: 10px;
-  font-size: 1em;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 25px;
   border: 1px solid #ccc;
-  border-radius: 20px;
+  outline: none;
   margin-right: 10px;
 }
 
-form button {
+/* Button */
+button {
+  padding: 10px 20px;
   background: #075e54;
   color: white;
   border: none;
-  border-radius: 20px;
-  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: bold;
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: #0b806e;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .chat-container {
+    height: 100dvh;
+  }
+
+  .message {
+    max-width: 80%;
+  }
 }
