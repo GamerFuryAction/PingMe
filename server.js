@@ -7,6 +7,13 @@ const path = require('path');
 const session = require('express-session');
 const sharedsession = require('express-socket.io-session');
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
+
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5,              // max 5 attempts
+  message: 'Too many login attempts. Please try again later.'
+});
 
 const users = [];
 const messageHistory = [];
@@ -45,7 +52,12 @@ app.get('/logout', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, confirmPassword } = req.body;
+  
+  if (password !== confirmPassword) {
+    return res.send('Passwords do not match. <a href="/">Try again</a>');
+  }
+
   const existingUser = users.find(u => u.username === username);
   if (existingUser) {
     return res.send('User already exists. <a href="/">Try again</a>');
@@ -57,9 +69,10 @@ app.post('/register', async (req, res) => {
   res.redirect('/chat');
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   const user = users.find(u => u.username === username);
+
   if (!user) {
     return res.send('User not found. <a href="/">Try again</a>');
   }
