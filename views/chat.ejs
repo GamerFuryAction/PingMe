@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>PingMe Chat</title>
   <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
 </head>
 <body>
   <div class="sidebar">
@@ -18,8 +19,11 @@
     </header>
 
     <ul id="messages"></ul>
+    <ul id="user-list"></ul>
+    <div id="typing-status"></div>
 
     <form id="form">
+      <button type="button" id="emoji-btn">😊</button>
       <input id="input" autocomplete="off" placeholder="Type a message..." />
       <button>Send</button>
     </form>
@@ -29,10 +33,27 @@
   <script>
     const socket = io();
     const currentUser = "<%= username %>";
-    const messages = document.getElementById('messages');
-    const input = document.getElementById('input');
     const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
+    const userList = document.getElementById('user-list');
+    const typingStatus = document.getElementById('typing-status');
+    const emojiBtn = document.getElementById('emoji-btn');
     let currentTarget = null;
+    let typingTimeout;
+
+    const picker = new EmojiButton({
+      theme: 'dark'
+    });
+
+    emojiBtn.addEventListener('click', () => {
+      picker.togglePicker(emojiBtn);
+    });
+
+    picker.on('emoji', emoji => {
+      input.value += emoji;
+      input.focus();
+    });
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -41,41 +62,70 @@
 
       if (currentTarget) {
         socket.emit('private message', { to: currentTarget, msg });
-        addMessage(currentUser + ' → ' + currentTarget, msg, 'me');
+        addMessage(`You → ${currentTarget}`, msg, 'me');
       } else {
         socket.emit('chat message', msg);
       }
+
       input.value = '';
+      stopTyping();
     });
+
+    input.addEventListener('input', () => {
+      socket.emit('typing', currentTarget || null);
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(stopTyping, 1000);
+    });
+
+    function stopTyping() {
+      socket.emit('stop typing', currentTarget || null);
+    }
 
     socket.on('chat message', (data) => {
       addMessage(data.username, data.msg, data.username === currentUser ? 'me' : 'them');
     });
 
     socket.on('private message', (data) => {
-      addMessage(data.from + ' (private)', data.msg, 'them');
+      addMessage(`${data.from} (private)`, data.msg, 'them');
     });
 
-    socket.on('online users', (usernames) => {
-      const list = document.getElementById('user-list');
-      list.innerHTML = '';
-      usernames.forEach(name => {
+    socket.on('online users', (users) => {
+      userList.innerHTML = '';
+      users.forEach(name => {
         if (name === currentUser) return;
         const li = document.createElement('li');
         li.textContent = name;
         li.onclick = () => {
           currentTarget = name;
-          alert(`Now chatting privately with ${name}`);
+          alert(`Chatting privately with ${name}`);
         };
-        list.appendChild(li);
+        userList.appendChild(li);
       });
     });
 
-    function addMessage(sender, text, who) {
+    socket.on('typing', ({ from }) => {
+      typingStatus.textContent = `${from} is typing...`;
+    });
+
+    socket.on('stop typing', ({ from }) => {
+      if (typingStatus.textContent.startsWith(from)) {
+        typingStatus.textContent = '';
+      }
+    });
+
+    function addMessage(sender, msg, who) {
       const li = document.createElement('li');
       li.classList.add('message', who);
-      li.innerHTML = `<span class="username">${sender}</span><div class="bubble">${text}</div>`;
+      li.innerHTML = `
+        <span class="username">${sender}</span>
+        <div class="bubble">${msg}</div>
+      `;
+      li.style.opacity = 0;
       messages.appendChild(li);
+      setTimeout(() => {
+        li.style.opacity = 1;
+        li.style.transform = 'translateY(0)';
+      }, 20);
       messages.scrollTop = messages.scrollHeight;
     }
   </script>

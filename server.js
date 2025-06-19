@@ -72,27 +72,49 @@ app.get('/chat', (req, res) => {
   res.render('chat', { username: req.session.username });
 });
 
-io.on('connection', socket => {
+io.on('connection', (socket) => {
   const username = socket.handshake.session.username;
   if (!username) return;
 
   onlineUsers.set(username, socket.id);
   io.emit('online users', Array.from(onlineUsers.keys()));
 
+  socket.on('disconnect', () => {
+    onlineUsers.delete(username);
+    io.emit('online users', Array.from(onlineUsers.keys()));
+  });
+
   socket.on('chat message', (msg) => {
     io.emit('chat message', { username, msg });
   });
 
   socket.on('private message', ({ to, msg }) => {
-    const toSocketId = onlineUsers.get(to);
-    if (toSocketId) {
-      io.to(toSocketId).emit('private message', { from: username, msg });
+    const toSocket = onlineUsers.get(to);
+    if (toSocket) {
+      io.to(toSocket).emit('private message', { from: username, msg });
     }
   });
 
-  socket.on('disconnect', () => {
-    onlineUsers.delete(username);
-    io.emit('online users', Array.from(onlineUsers.keys()));
+  socket.on('typing', (target) => {
+    if (target) {
+      const toSocket = onlineUsers.get(target);
+      if (toSocket) {
+        io.to(toSocket).emit('typing', { from: username });
+      }
+    } else {
+      socket.broadcast.emit('typing', { from: username });
+    }
+  });
+
+  socket.on('stop typing', (target) => {
+    if (target) {
+      const toSocket = onlineUsers.get(target);
+      if (toSocket) {
+        io.to(toSocket).emit('stop typing', { from: username });
+      }
+    } else {
+      socket.broadcast.emit('stop typing', { from: username });
+    }
   });
 });
 
