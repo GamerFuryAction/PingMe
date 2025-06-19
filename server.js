@@ -86,27 +86,79 @@ app.post('/login', loginLimiter, async (req, res) => {
   res.redirect('/chat');
 });
 
-io.on('connection', (socket) => {
-  const username = socket.handshake.session.username;
+let currentTarget = null;
 
-  if (!username) {
-    console.log('User connected without username');
-    return;
+socket.on('online users', (usernames) => {
+  const userList = document.getElementById('user-list');
+  userList.innerHTML = '';
+  usernames.forEach(user => {
+    if (user === currentUser) return;
+    const li = document.createElement('li');
+    li.textContent = user;
+    li.onclick = () => {
+      currentTarget = user;
+      alert(`Now chatting privately with ${user}`);
+    };
+    userList.appendChild(li);
+  });
+});
+
+socket.on('private message', (data) => {
+  const li = document.createElement('li');
+  li.classList.add('message', 'them');
+  li.innerHTML = `
+    <span class="username">${data.from} (private)</span>
+    <div class="bubble">${data.msg}</div>
+  `;
+  messages.appendChild(li);
+  messages.scrollTop = messages.scrollHeight;
+});
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const message = input.value.trim();
+  if (!message) return;
+
+  if (currentTarget) {
+    socket.emit('private message', { to: currentTarget, msg: message });
+    const li = document.createElement('li');
+    li.classList.add('message', 'me');
+    li.innerHTML = `
+      <span class="username">You → ${currentTarget} (private)</span>
+      <div class="bubble">${message}</div>
+    `;
+    messages.appendChild(li);
+  } else {
+    socket.emit('chat message', message);
   }
 
-  console.log(`User connected: ${username}`);
+  input.value = '';
+});
 
-  socket.emit('message history', messageHistory);
 
-  socket.on('chat message', (msg) => {
-    const message = { username, msg };
-    messageHistory.push(message);
-    io.emit('chat message', message);
+io.on('connection', (socket) => {
+  const username = socket.handshake.session.username;
+  if (!username) return;
+
+  onlineUsers.set(username, socket.id);
+
+  io.emit('online users', Array.from(onlineUsers.keys()));
+
+  socket.on('private message', ({ to, msg }) => {
+    const targetSocketId = onlineUsers.get(to);
+    if (targetSocketId) {
+      io.to(targetSocketId).emit('private message', {
+        from: username,
+        msg
+      });
+    }
   });
 
   socket.on('disconnect', () => {
-    console.log(`${username} disconnected`);
+    onlineUsers.delete(username);
+    io.emit('online users', Array.from(onlineUsers.keys()));
   });
+
 });
 
 http.listen(3000, () => {
