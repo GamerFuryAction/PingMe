@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>PingMe - Chat</title>
+  <title>PingMe Chat</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <div class="sidebar">
+    <h3>Online Users</h3>
+    <ul id="user-list"></ul>
+  </div>
+
   <div class="chat-container">
     <header>
-      <h2>PingMe - Welcome, <%= username %>!</h2>
-      <a href="/logout" style="color: white;">Logout</a>
+      <h2>PingMe - <%= username %></h2>
+      <a href="/logout">Logout</a>
     </header>
-    
-    <div class="sidebar">
-      <h3>Online Users</h3>
-      <ul id="user-list"></ul>
-    </div>
 
     <ul id="messages"></ul>
 
-    <form id="form" action="">
+    <form id="form">
       <input id="input" autocomplete="off" placeholder="Type a message..." />
       <button>Send</button>
     </form>
@@ -28,49 +28,56 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const messages = document.getElementById('messages');
     const currentUser = "<%= username %>";
-    let historyLoaded = false;
-
-    socket.on('message history', (history) => {
-      if (historyLoaded) return;
-      historyLoaded = true;
-
-      history.forEach(data => {
-        const li = document.createElement('li');
-        li.classList.add('message');
-        li.classList.add(data.username === currentUser ? 'me' : 'them');
-        li.innerHTML = `
-          <span class="username">${data.username}</span>
-          <div class="bubble">${data.msg}</div>
-        `;
-        messages.appendChild(li);
-      });
-
-      messages.scrollTop = messages.scrollHeight;
-    });
-
-    socket.on('chat message', (data) => {
-      const li = document.createElement('li');
-      li.classList.add('message');
-      li.classList.add(data.username === currentUser ? 'me' : 'them');
-      li.innerHTML = `
-        <span class="username">${data.username}</span>
-        <div class="bubble">${data.msg}</div>
-      `;
-      messages.appendChild(li);
-      messages.scrollTop = messages.scrollHeight;
-    });
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const form = document.getElementById('form');
+    let currentTarget = null;
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (input.value.trim() !== '') {
-        socket.emit('chat message', input.value.trim());
-        input.value = '';
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      if (currentTarget) {
+        socket.emit('private message', { to: currentTarget, msg });
+        addMessage(currentUser + ' → ' + currentTarget, msg, 'me');
+      } else {
+        socket.emit('chat message', msg);
       }
+      input.value = '';
     });
+
+    socket.on('chat message', (data) => {
+      addMessage(data.username, data.msg, data.username === currentUser ? 'me' : 'them');
+    });
+
+    socket.on('private message', (data) => {
+      addMessage(data.from + ' (private)', data.msg, 'them');
+    });
+
+    socket.on('online users', (usernames) => {
+      const list = document.getElementById('user-list');
+      list.innerHTML = '';
+      usernames.forEach(name => {
+        if (name === currentUser) return;
+        const li = document.createElement('li');
+        li.textContent = name;
+        li.onclick = () => {
+          currentTarget = name;
+          alert(`Now chatting privately with ${name}`);
+        };
+        list.appendChild(li);
+      });
+    });
+
+    function addMessage(sender, text, who) {
+      const li = document.createElement('li');
+      li.classList.add('message', who);
+      li.innerHTML = `<span class="username">${sender}</span><div class="bubble">${text}</div>`;
+      messages.appendChild(li);
+      messages.scrollTop = messages.scrollHeight;
+    }
   </script>
 </body>
 </html>

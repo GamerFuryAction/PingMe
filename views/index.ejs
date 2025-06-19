@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>PingMe - Login</title>
+  <meta charset="UTF-8">
+  <title>PingMe Login</title>
 </head>
-<body>
-  <h1>Login or Register</h1>
-  <form method="POST" action="/login">
-    <input name="username" placeholder="Username" required />
-    <input name="password" type="password" placeholder="Password" required />
+<body style="background: #121212; color: #eee; font-family: sans-serif; text-align: center; padding: 50px;">
+  <h1>Welcome to PingMe</h1>
+
+  <form method="POST" action="/login" style="margin-bottom: 20px;">
+    <h2>Login</h2>
+    <input name="username" placeholder="Username" required><br><br>
+    <input name="password" type="password" placeholder="Password" required><br><br>
     <button>Login</button>
   </form>
 
   <form method="POST" action="/register">
-  <input type="text" name="username" placeholder="Username" required />
-  <input type="password" name="password" placeholder="Password" required />
-  <input type="password" name="confirmPassword" placeholder="Confirm Password" required />
-  <button type="submit">Register</button>
-</form>
-
+    <h2>Register</h2>
+    <input name="username" placeholder="Username" required><br><br>
+    <input name="password" type="password" placeholder="Password" required><br><br>
+    <input name="confirmPassword" type="password" placeholder="Confirm Password" required><br><br>
+    <button>Register</button>
+  </form>
 </body>
 </html>
