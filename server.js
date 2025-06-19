@@ -1,4 +1,5 @@
 const express = require('express');
+const onlineUsers = new Map();
 const app = express();
 const http = require('http').createServer(app);
 const { Server } = require('socket.io');
@@ -10,8 +11,8 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 
 const loginLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 5,              // max 5 attempts
+  windowMs: 60 * 1000,
+  max: 5,
   message: 'Too many login attempts. Please try again later.'
 });
 
@@ -32,7 +33,6 @@ app.use(sessionMiddleware);
 
 io.use(sharedsession(sessionMiddleware, { autoSave: true }));
 
-// Routes
 app.get('/', (req, res) => {
   if (req.session.username) {
     return res.redirect('/chat');

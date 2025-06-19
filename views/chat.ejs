@@ -29,7 +29,6 @@
     const currentUser = "<%= username %>";
     let historyLoaded = false;
 
-    // Load message history once
     socket.on('message history', (history) => {
       if (historyLoaded) return;
       historyLoaded = true;
@@ -48,7 +47,6 @@
       messages.scrollTop = messages.scrollHeight;
     });
 
-    // New messages
     socket.on('chat message', (data) => {
       const li = document.createElement('li');
       li.classList.add('message');
@@ -61,7 +59,6 @@
       messages.scrollTop = messages.scrollHeight;
     });
 
-    // Send a message
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       if (input.value.trim() !== '') {
