@@ -75,6 +75,9 @@ app.get('/chat', (req, res) => {
 io.on('connection', (socket) => {
   const username = socket.handshake.session.username;
   if (!username) return;
+  console.log('🟢 Connected:', username);
+  console.log('👥 Online now:', Array.from(onlineUsers.keys()));
+  io.emit('online users', Array.from(onlineUsers.keys()));
 
   onlineUsers.set(username, socket.id);
   io.emit('online users', Array.from(onlineUsers.keys()));
@@ -83,6 +86,18 @@ io.on('connection', (socket) => {
     onlineUsers.delete(username);
     io.emit('online users', Array.from(onlineUsers.keys()));
   });
+
+  socket.on('online users', (users) => {
+  const list = document.getElementById('user-list');
+  list.innerHTML = '';
+  users.forEach(name => {
+    if (name === currentUser) return;
+    const li = document.createElement('li');
+    li.textContent = name;
+    li.onclick = () => { currentTarget = name; alert(`Private chat with ${name}`); };
+    list.appendChild(li);
+  });
+});
 
   socket.on('chat message', (msg) => {
     io.emit('chat message', { username, msg });
