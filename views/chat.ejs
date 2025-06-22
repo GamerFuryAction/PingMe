@@ -4,8 +4,19 @@
   <meta charset="UTF-8" />
   <title>PingMe Chat</title>
   <link rel="stylesheet" href="/style.css" />
-  <script defer src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
-  <script defer src="/your-script.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js">
+    const picker = new EmojiButton({ theme: 'dark' });
+
+  emojiBtn.addEventListener('click', () => {
+    picker.togglePicker(emojiBtn);
+  });
+
+  picker.on('emoji', emoji => {
+    input.value += emoji;
+    input.focus();
+  });
+
+  </script>
 </head>
 <body>
   <div class="sidebar">
@@ -43,20 +54,7 @@
     let currentTarget = null;
     let typingTimeout;
 
-    const picker = new EmojiButton({ theme: 'dark' });
-
-  emojiBtn.addEventListener('click', () => {
-    picker.togglePicker(emojiBtn);
-  });
-
-  picker.on('emoji', emoji => {
-    input.value += emoji;
-    input.focus();
-  });
-
-    emojiBtn.addEventListener('click', () => {
-      picker.togglePicker(emojiBtn);
-    });
+    
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
